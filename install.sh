@@ -1,28 +1,30 @@
 #!/bin/bash
+
+INSTALL_PATH="/usr/local/bin/Probezila"
+
 function show_ascii_art {
-echo -e "\033[1;93m    ____             __               _ __     "
-echo -e "\033[1;93m   / __ \_________  / /_  ___  ____  (_) /___ _"
-echo -e "\033[1;93m  / /_/ / ___/ __ \/ __ \/ _ \/_  / / / / __ \`/"
-echo -e "\033[1;93m / ____/ /  / /_/ / /_/ /  __/ / /_/ / / /_/ / "
-echo -e "\033[1;93m/_/   /_/   \____/_.___/\___/ /___/_/_/\__,_/  \033[0m"
-printf "                     Created by \033[93mH3LLKY4T \033[31mv1.0 \n          \033[0m \033[31m \n"
-    
-    echo -e "\033[0m  Host OS: \033[93m $(uname -s) $(uname -r) \033[0m \n  User: \033[93m $USER \033[0m \n  Date and Time: \033[93m $(date) \033[0m         \n" 
+    echo -e "\033[1;93m    ____             __               _ __     "
+    echo -e "\033[1;93m   / __ \_________  / /_  ___  ____  (_) /___ _"
+    echo -e "\033[1;93m  / /_/ / ___/ __ \/ __ \/ _ \/_  / / / / __ \`/"
+    echo -e "\033[1;93m / ____/ /  / /_/ / /_/ /  __/ / /_/ / / /_/ / "
+    echo -e "\033[1;93m/_/   /_/   \____/_.___/\___/ /___/_/_/\__,_/  \033[0m"
+    printf "                     Tool by \033[93mH3LLKY4T \033[31mv2 \n          \033[0m \033[31m \n"
+        
+    echo -e " Use with caution. Developers are not responsible for any damage caused. \n Date and Time: \033[93m $(date) \033[0m         \n" 
     
 }
 
 function show_help {
-    echo "Usage: $0 [-l <url> | -L <url_list_file> | -o <output_file> | -h]"
+    echo "Usage: Probezila [--install | --uninstall | -l <url> | -L <url_list_file> | -o <output_file> | -h]"
+    echo "  --install             Install Probezila to /usr/local/bin/"
+    echo "  --uninstall           Uninstall Probezila from /usr/local/bin/"
     echo "  -l <url>              Check a single URL"
     echo "  -L <url_list_file>    Check URLs from a list file"
     echo "  -o <output_file>      Write URLs with response 200 to the specified file"
     echo "  -h, --help            Show help"
     exit 1
 }
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root."
-   exit 1
-fi
+
 function check_internet_connection() {
     if ! curl -s --head http://www.google.com/ &> /dev/null; then
         echo
@@ -31,13 +33,10 @@ function check_internet_connection() {
     fi
 }
 
-# Function to detect CMS used by a website
 function detect_cms() {
     url="$1"
-    # Fetch the website's content, remove null bytes to avoid Bash warning
     content=$(curl -sL "$url" | tr -d '\000')
 
-    # Define color codes
     red_color=$(printf '\033[31m')
     light_blue_color=$(printf '\033[96m')
     blue_color=$(printf '\033[94m')
@@ -45,7 +44,6 @@ function detect_cms() {
     yellow_color=$(printf '\033[93m')
     no_color=$(printf '\033[0m')
 
-    # Expanded CMS detection with color output
     if echo "$content" | grep -qi 'wp-content'; then
         echo -e "${yellow_color}[WordPress]${no_color}"
     elif echo "$content" | grep -qi 'Drupal.settings' || echo "$content" | grep -qi '/sites/all/'; then
@@ -114,16 +112,13 @@ function detect_waf() {
     # Fetch the headers
     headers=$(curl -sI "$url")
 
-    # Normalize header names to lowercase for case-insensitive matching
     normalized_headers=$(echo "$headers" | awk '{print tolower($0)}')
 
-    # Define color codes
     GREEN=$(printf '\033[92m')
     RED=$(printf '\033[91m')
     CYAN=$(printf '\033[36m')
     NC=$(printf '\033[0m') # No Color
 
-    # Checks for common WAF signatures
     if echo "$normalized_headers" | grep -qi 'x-sucuri-id'; then
         echo -e "${RED}[Sucuri WAF]${NC}"
     elif echo "$normalized_headers" | grep -qi 'server: cloudflare'; then
@@ -160,13 +155,10 @@ function detect_waf() {
 
 function detect_cdn() {
     url="$1"
-    # Fetch the headers
     headers=$(curl -sI "$url")
 
-    # Normalize header names to lowercase for case-insensitive matching
     normalized_headers=$(echo "$headers" | awk '{print tolower($0)}')
 
-    # Define color codes
     GREEN=$(printf '\033[92m')
     RED=$(printf '\033[91m')
     YELLOW=$(printf '\033[33m')
@@ -201,15 +193,73 @@ function detect_cdn() {
     fi
 }
 
-output_file=""
+function install_probezila {
+    # Check if script is already installed
+    if [ -f "$INSTALL_PATH" ]; then
+        echo -e "\e[33mProbezila is already installed at $INSTALL_PATH.\e[0m"
+        exit 0
+    fi
+
+    sudo cp "$0" "$INSTALL_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "\e[31mInstallation failed. Please check your permissions.\e[0m"
+        exit 1
+    fi
+
+    sudo chmod +x "$INSTALL_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "\e[31mFailed to make Probezila executable.\e[0m"
+        exit 1
+    fi
+
+    echo -e "\e[92mProbezila has been installed successfully to $INSTALL_PATH.\e[0m"
+    echo -e "You can now run it using the command: \e[93mProbezila\e[0m"
+    exit 0
+}
+
+function uninstall_probezila {
+    if [ ! -f "$INSTALL_PATH" ]; then
+        echo -e "\e[33mProbezila is not installed on this system.\e[0m"
+        exit 0
+    fi
+
+    sudo rm "$INSTALL_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "\e[31mUninstallation failed. Please check your permissions.\e[0m"
+        exit 1
+    fi
+
+    echo -e "\e[92mProbezila has been uninstalled successfully from $INSTALL_PATH.\e[0m"
+    exit 0
+}
+
+function handle_install_uninstall {
+    case "$1" in
+        --install)
+            install_probezila
+            ;;
+        --uninstall)
+            uninstall_probezila
+            ;;
+        *)
+            show_help
+            ;;
+    esac
+}
 
 show_ascii_art
 check_internet_connection
 echo -e 
+
 if [ "$#" -eq 0 ]; then
     show_help
 fi
 
+if [[ "$1" == "--install" || "$1" == "--uninstall" ]]; then
+    handle_install_uninstall "$1"
+fi
+
+output_file=""
 while getopts ":l:L:o:h" opt; do
     case $opt in
         l)
@@ -227,12 +277,17 @@ while getopts ":l:L:o:h" opt; do
     esac
 done
 
+export -f check_url
+export -f detect_cms
+export -f detect_waf
+export -f detect_cdn
+
 function check_url() {
     url="$1"
     outfile="$2"
     response_code=$(curl -sL -w "%{http_code}" "$url" -o /dev/null)
     cms=$(detect_cms "$url")
-    waf=$(detect_waf "$url") # Detect WAF
+    waf=$(detect_waf "$url")
     cdn=$(detect_cdn "$url")
     reset_color=$(printf '\033[0m')
     url_color=$(printf '\033[97m')
@@ -241,34 +296,34 @@ function check_url() {
     case $response_code in
         200)
             status_color=$(printf '\033[92m') 
-            status_message="  [Online]"
+            status_message="  [+] [Online]"
             if [ -n "$outfile" ]; then
                 echo "$url" >> "$outfile"
             fi
             ;;
         301)
             status_color=$(printf '\033[33m') 
-            status_message="  [Moved Permanently]"
+            status_message="  [+] [Moved Permanently]"
             ;;
         401)
             status_color=$(printf '\033[96m') 
-            status_message="  [Unauthorized]"
+            status_message="  [+] [Unauthorized]"
             ;;
         403)
             status_color=$(printf '\033[93m')
-            status_message="  [Forbidden]"
+            status_message="  [!] [Forbidden]"
             ;;
         404)
             status_color=$(printf '\033[31m') 
-            status_message="  [Not Found]"
+            status_message="  [x] [Not Found]"
             ;;
         400)
             status_color=$(printf '\033[31m') 
-            status_message="  [Bad Request]"
+            status_message="  [+] [Bad Request]"
             ;;
         *)
             status_color=$(printf '\033[35m') 
-            status_message="  [Unknown Response]"
+            status_message="  [*] [Unknown Response]"
             ;;
     esac
     full_message="${status_color}${status_message} ${url_color}${url}${reset_color}  ${cms_color}${cms}${reset_color} ${waf_color}${waf}${cdn}${reset_color}"
@@ -276,15 +331,15 @@ function check_url() {
     printf "%-${printf_width}s %sResponse code: %s%s\n" "$full_message" "$status_color" "$response_code" "$reset_color"
    
 }
-export -f check_url
-export -f detect_cms
-export -f detect_waf # Export detect_waf
-export -f detect_cdn
 
 if [ -n "$single_url" ]; then
     check_url "$single_url" "$output_file"
 elif [ -n "$url_list_file" ]; then
-    cat "$url_list_file" | parallel -j 50 check_url {} "$output_file"
+    if ! command -v parallel &> /dev/null; then
+        echo -e "\e[31mGNU parallel is not installed. Please install it to use this feature.\e[0m"
+        exit 1
+    fi
+    parallel -j 50 check_url {} "$output_file" < "$url_list_file"
 else
     show_help
 fi
