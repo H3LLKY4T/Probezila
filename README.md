@@ -38,21 +38,21 @@ git clone https://github.com/H3LLKY4T/Probezila.git
 Ensure the script is executable by navigating to the Probezila directory and running:
  ```
 cd Probezila
-chmod +x probezila.sh
+chmod +x install.sh
  ```
 ## Usage
 #### **Checking a Single URL**
 When you use the -l flag followed by a URL, Probezila scans that specific URL. This option is useful for quick checks on individual websites.
  ```
-./Probezila.sh -l www.example.com
+Probezila -l www.example.com
  ```
 #### **Checking Multiple URLs from a List**
 If you have a list of URLs that you want to scan, you can use the -L flag followed by the filename where your URLs are listed (one URL per line). This batch processing mode is efficient for analyzing multiple websites in one go.
  ```
-./Probezila.sh -L urllist.txt
+Probezila -L urllist.txt
  ```
 #### **Saving Online URLs to a File**
 When you want to save the results of your scan, specifically the URLs that are online (returning a 200 OK response), you can use the -o flag followed by the filename where you wish to save these URLs. This feature is particularly useful for filtering out active websites from a large list, allowing for focused analysis or follow-up actions on responsive URLs only.
  ```
-./Probezila.sh -L urllist.txt -o aliveurls.txt
+Probezila -L urllist.txt -o aliveurls.txt
  ```
