@@ -277,11 +277,6 @@ while getopts ":l:L:o:h" opt; do
     esac
 done
 
-export -f check_url
-export -f detect_cms
-export -f detect_waf
-export -f detect_cdn
-
 function check_url() {
     url="$1"
     outfile="$2"
@@ -331,6 +326,11 @@ function check_url() {
     printf "%-${printf_width}s %sResponse code: %s%s\n" "$full_message" "$status_color" "$response_code" "$reset_color"
    
 }
+
+export -f check_url
+export -f detect_cms
+export -f detect_waf
+export -f detect_cdn
 
 if [ -n "$single_url" ]; then
     check_url "$single_url" "$output_file"
