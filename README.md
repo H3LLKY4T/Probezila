@@ -39,6 +39,7 @@ Ensure the script is executable by navigating to the Probezila directory and run
  ```
 cd Probezila
 chmod +x install.sh
+./install.sh --install
  ```
 ## Usage
 #### **Checking a Single URL**
